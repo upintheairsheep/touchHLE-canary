@@ -49,7 +49,7 @@ android {
 
     if (!project.hasProperty('EXCLUDE_NATIVE_LIBS')) {
         sourceSets.main {
-            jniLibs.srcDir 'libs'
+            jniLibs.srcDir "${projectDir}/jniLibs"
         }
         externalNativeBuild {
             ndkBuild {
@@ -78,6 +78,7 @@ android {
 cargoNdk {
     targets = ["arm64"]
     module = ".."
+    librariesNames = ["libtouchHLE.so", "libSDL2.so"]
     // workaround for https://stackoverflow.com/a/70546745/2241008
     extraCargoEnv = ["ANDROID_NDK": android.ndkDirectory]
 }

@@ -97,4 +97,5 @@ pub fn main() {
     std::fs::write(out_dir.join("dynarmic_license.txt"), dynarmic_summary).unwrap();
 
     println!("cargo:rustc-link-arg=-lOpenSLES");
+    println!("cargo:rustc-link-arg=-Wl,-rpath,$ORIGIN");
 }
