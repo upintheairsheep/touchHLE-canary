@@ -205,7 +205,7 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
-                let va_list = VAList { reg_offset };
+                let va_list = VAList { reg_offset, fake_regs: None };
                 let retval = self(env, $(args.$p,)* va_list);
                 if let Some(retval_ptr) = retval_ptr {
                     retval.to_mem(retval_ptr, &mut env.mem);
@@ -394,13 +394,18 @@ pub fn write_next_arg<T: GuestArg>(
 /// Calling convention translation for a variable arguments list (like C
 /// `va_list`).
 pub struct VAList {
-    reg_offset: usize,
+    pub reg_offset: usize,
+    pub fake_regs: Option<[u32; 16]>,
 }
 impl VAList {
     /// Get the next argument, like C's `va_arg()`. Be careful as the type may
     /// be inferred from the call-site if you don't specify it explicitly.
     pub fn next<T: GuestArg>(&mut self, env: &mut Environment) -> T {
-        read_next_arg(&mut self.reg_offset, env.cpu.regs_mut(), &env.mem)
+        let regs = match self.fake_regs {
+            Some(regs) => regs,
+            _ => *env.cpu.regs_mut(),
+        };
+        read_next_arg(&mut self.reg_offset, &regs, &env.mem)
     }
 }
 

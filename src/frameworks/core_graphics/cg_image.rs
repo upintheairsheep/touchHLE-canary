@@ -120,6 +120,19 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     height
 }
 
+pub type CGDataProviderRef = CFTypeRef;
+fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
+    // TODO: implement proper provider?
+    image
+}
+
+// TODO: move to proper module
+pub type CFDataRef = CFTypeRef;
+fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) -> CFDataRef {
+    // TODO: copy...
+    provider
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
@@ -127,4 +140,6 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
+    export_c_func!(CGImageGetDataProvider(_)),
+    export_c_func!(CGDataProviderCopyData(_)),
 ];

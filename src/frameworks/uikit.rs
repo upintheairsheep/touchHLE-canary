@@ -27,6 +27,7 @@ pub mod ui_touch;
 pub mod ui_view;
 pub mod ui_view_controller;
 pub mod ui_window;
+pub mod ui_image_view;
 
 #[derive(Default)]
 pub struct State {

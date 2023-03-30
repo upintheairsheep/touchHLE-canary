@@ -54,7 +54,7 @@ fn gettimeofday(
     timeval_ptr: MutPtr<timeval>,
     timezone_ptr: MutVoidPtr, // deprecated, always NULL
 ) -> i32 {
-    assert!(timezone_ptr.is_null());
+    //assert!(timezone_ptr.is_null());
 
     if timeval_ptr.is_null() {
         return 0; // success

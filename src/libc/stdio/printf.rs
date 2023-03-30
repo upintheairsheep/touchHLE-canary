@@ -5,11 +5,12 @@
  */
 //! `printf` function family. The implementation is also used by `NSLog`.
 
-use crate::abi::VAList;
+use crate::abi::{GuestArg, VAList};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
 use crate::Environment;
 use std::io::Write;
+use crate::cpu::Cpu;
 
 /// String formatting implementation for `printf` and `NSLog` function families.
 ///
@@ -39,12 +40,16 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            format_char_idx += 1;
+            pad_char = '0';
+        }
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
@@ -67,7 +72,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
-                res.extend_from_slice(env.mem.cstr_at(c_string));
+                if !c_string.is_null() {
+                    res.extend_from_slice(env.mem.cstr_at(c_string));
+                }
             }
             b'd' | b'i' | b'u' => {
                 let int: i64 = if specifier == b'u' {
@@ -101,6 +108,10 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
                     res.extend_from_slice(format!("{}", float).as_bytes());
                 }
             }
+            b'x' => {
+                let int: i64 = args.next(env);
+                res.extend_from_slice(format!("{:x}", int).as_bytes());
+            }
             // TODO: more specifiers
             _ => unimplemented!("Format character '{}'", specifier as char),
         }
@@ -109,6 +120,41 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     log_dbg!("=> {:?}", std::str::from_utf8(&res));
 
     res
+}
+
+fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: VAList) -> i32 {
+    // TODO: implement
+    0
+}
+
+fn vsnprintf(env: &mut Environment, dest: MutPtr<u8>, n: GuestUSize, format: ConstPtr<u8>, arg: MutVoidPtr) -> i32 {
+    log_dbg!(
+        "vsnprintf({:?} {:?} {:?})",
+        dest,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let mut fake_regs = [0u32; 16];
+    fake_regs[Cpu::SP] = arg.to_bits();
+
+    let va_list = VAList { reg_offset: 4, fake_regs: Some(fake_regs) };
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), va_list);
+    let middle = if ((n - 1) as usize) < res.len() {
+        &res[..(n - 1) as usize]
+    } else {
+        &res[..]
+    };
+
+    let dest_slice = env
+        .mem
+        .bytes_at_mut(dest, n.try_into().unwrap());
+    for (i, &byte) in middle.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    res.len().try_into().unwrap()
 }
 
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: VAList) -> i32 {
@@ -147,6 +193,8 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: VAList) -> i32 {
 // TODO: more printf variants
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(sscanf(_, _, _)),
+    export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
 ];

@@ -7,10 +7,12 @@
 
 use super::GLES;
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr};
+use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, Mem, MutPtr, Ptr};
 use crate::window::gles11;
 use crate::window::gles11::types::*;
 use crate::Environment;
+
+use core::ffi::CStr;
 
 fn with_ctx_and_mem<T, U>(env: &mut Environment, f: T) -> U
 where
@@ -23,9 +25,9 @@ where
         env.current_thread,
     );
 
-    //panic_on_gl_errors(&mut **gles);
+    //panic_on_gl_errors(&mut *gles);
     let res = f(gles, &mut env.mem);
-    //panic_on_gl_errors(&mut **gles);
+    //panic_on_gl_errors(&mut *gles);
     #[allow(clippy::let_and_return)]
     res
 }
@@ -95,6 +97,18 @@ fn glGetIntegerv(env: &mut Environment, pname: GLenum, params: MutPtr<GLint>) {
 }
 fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
     with_ctx_and_mem(env, |gles, _mem| unsafe { gles.Hint(target, mode) })
+}
+fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
+    with_ctx_and_mem(env, |gles, mem| {
+        let str: *const u8 = unsafe { gles.GetString(name) };
+        //let mut array_tmp = [0u8; 50];
+        //array_tmp[..str.len()].copy_from_slice(str.as_bytes());
+        // let array_tmp: [u8; 25] = str.as_bytes().try_into().unwrap();
+        // mem.alloc_and_write_cstr(&array_tmp).cast_const()
+        //Ptr::cast(str)
+        //Ptr::from_bits(0)
+        mem.alloc_and_write_cstr(&[b'f', b'o', b'o']).cast_const()
+    })
 }
 
 // Other state manipulation
@@ -698,6 +712,11 @@ fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: Mu
         unsafe { gles.DeleteRenderbuffersOES(n, renderbuffers) }
     })
 }
+fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
+    with_ctx_and_mem(env, |gles, _mem| unsafe {
+        gles.GenerateMipmapOES(target)
+    })
+}
 
 pub const FUNCTIONS: FunctionExports = &[
     // Generic state manipulation
@@ -708,6 +727,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glDisableClientState(_)),
     export_c_func!(glGetIntegerv(_, _)),
     export_c_func!(glHint(_, _)),
+    export_c_func!(glGetString(_)),
     // Other state manipulation
     export_c_func!(glAlphaFunc(_, _)),
     export_c_func!(glAlphaFuncx(_, _)),
@@ -794,4 +814,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(glCheckFramebufferStatusOES(_)),
     export_c_func!(glDeleteFramebuffersOES(_, _)),
     export_c_func!(glDeleteRenderbuffersOES(_, _)),
+    export_c_func!(glGenerateMipmapOES(_)),
 ];

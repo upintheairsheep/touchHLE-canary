@@ -133,6 +133,10 @@ pub const CLASSES: ClassExports = objc_classes! {
     this
 }
 
+- (())setUserInteractionEnabled:(bool)_enabled {
+    // TODO: enable user interaction
+}
+
 // TODO: setMultipleTouchEnabled
 - (())setMultipleTouchEnabled:(bool)_enabled {
     // TODO: enable multitouch
@@ -168,6 +172,10 @@ pub const CLASSES: ClassExports = objc_classes! {
 
 - (id)layer {
     env.objc.borrow_mut::<UIViewHostObject>(this).layer
+}
+
+- (())setBackgroundColor:(id)_color { // UIColor *
+    // TODO: implement
 }
 
 - (bool)opaque {

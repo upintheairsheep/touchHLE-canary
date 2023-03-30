@@ -10,6 +10,9 @@ use crate::mem::{ConstPtr, MutVoidPtr, Ptr};
 use crate::Environment;
 
 fn dlopen(env: &mut Environment, path: ConstPtr<u8>, _mode: i32) -> MutVoidPtr {
+    if env.mem.cstr_at_utf8(path) == Ok("/System/Library/Frameworks/OpenAL.framework/OpenAL") {
+        return Ptr::null();
+    }
     // TODO: dlopen() support for real dynamic libraries, and support for all
     // libraries with host implementations.
     assert_eq!(env.mem.cstr_at_utf8(path), Ok("/usr/lib/libSystem.B.dylib"));
@@ -17,6 +20,10 @@ fn dlopen(env: &mut Environment, path: ConstPtr<u8>, _mode: i32) -> MutVoidPtr {
     // TODO: Find out whether the handle is truly opaque on iPhone OS, and if
     // not, where it points.
     path.cast_mut().cast()
+}
+
+fn dlerror(env: &mut Environment) -> MutVoidPtr {
+    Ptr::null()
 }
 
 fn dlsym(env: &mut Environment, handle: MutVoidPtr, symbol: ConstPtr<u8>) -> MutVoidPtr {
@@ -46,6 +53,7 @@ fn dlclose(env: &mut Environment, handle: MutVoidPtr) -> i32 {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(dlopen(_, _)),
+    export_c_func!(dlerror()),
     export_c_func!(dlsym(_, _)),
     export_c_func!(dlclose(_)),
 ];

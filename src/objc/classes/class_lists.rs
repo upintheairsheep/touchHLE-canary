@@ -35,6 +35,7 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     foundation::ns_thread::CLASSES,
     foundation::ns_timer::CLASSES,
     foundation::ns_url::CLASSES,
+    foundation::ns_url_request::CLASSES,
     foundation::ns_user_defaults::CLASSES,
     foundation::ns_value::CLASSES,
     media_player::movie_player::CLASSES,
@@ -53,4 +54,5 @@ pub const CLASS_LISTS: &[super::ClassExports] = &[
     uikit::ui_view::CLASSES,
     uikit::ui_view_controller::CLASSES,
     uikit::ui_window::CLASSES,
+    uikit::ui_image_view::CLASSES,
 ];
