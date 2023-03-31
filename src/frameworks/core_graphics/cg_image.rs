@@ -167,8 +167,15 @@ impl GuestArg for CFRange {
 }
 
 fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer: MutPtr<u8>) {
-    // TODO: copy from data to buffer
-    0;
+    // TODO: assert that `data` is actually CGImageRef before copying
+    // TODO: actually support CFDataRef :p
+    let src_pixels = borrow_image(&env.objc, data).pixels();
+    let len = src_pixels.len().try_into().unwrap();
+    // TODO: respect range
+    // for i in range.location..(range.location + range.length) {
+    //
+    // }
+    let _ = &env.mem.bytes_at_mut(buffer, len).copy_from_slice(src_pixels);
 }
 
 pub const FUNCTIONS: FunctionExports = &[
