@@ -5,14 +5,16 @@
  */
 //! `CGImage.h`
 
+use std::ffi::c_int;
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
+use crate::frameworks::core_foundation::{CFIndex, CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
-use crate::mem::GuestUSize;
+use crate::mem::{GuestUSize, MutPtr, Ptr, SafeRead};
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
-use crate::Environment;
+use crate::{Environment, impl_GuestRet_for_large_struct};
+use crate::abi::GuestArg;
 
 pub type CGImageAlphaInfo = u32;
 pub const kCGImageAlphaNone: CGImageAlphaInfo = 0;
@@ -130,7 +132,43 @@ fn CGImageGetDataProvider(env: &mut Environment, image: CGImageRef) -> CGDataPro
 pub type CFDataRef = CFTypeRef;
 fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) -> CFDataRef {
     // TODO: copy...
+    // copy raw pixels with host memcopy
+    // create a new image backed with those pixels
+    // convert to cgimageref and return
     provider
+}
+
+fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
+    borrow_image(&env.objc, data).len()
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C, packed)]
+pub struct CFRange {
+    pub location: CFIndex,
+    pub length: CFIndex,
+}
+
+unsafe impl SafeRead for CFRange {}
+impl_GuestRet_for_large_struct!(CFRange);
+impl GuestArg for CFRange {
+    const REG_COUNT: usize = 2;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        CFRange {
+            location: GuestArg::from_regs(&regs[0..1]),
+            length: GuestArg::from_regs(&regs[1..2]),
+        }
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.location.to_regs(&mut regs[0..1]);
+        self.length.to_regs(&mut regs[1..2]);
+    }
+}
+
+fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, range: CFRange, buffer: MutPtr<u8>) {
+    // TODO: copy from data to buffer
+    0;
 }
 
 pub const FUNCTIONS: FunctionExports = &[
@@ -141,5 +179,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
     export_c_func!(CGImageGetDataProvider(_)),
+    // TODO: move to cg_data.rs
     export_c_func!(CGDataProviderCopyData(_)),
+    export_c_func!(CFDataGetLength(_)),
+    export_c_func!(CFDataGetBytes(_, _, _)),
 ];
