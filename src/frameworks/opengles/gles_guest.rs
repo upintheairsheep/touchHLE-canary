@@ -100,14 +100,8 @@ fn glHint(env: &mut Environment, target: GLenum, mode: GLenum) {
 }
 fn glGetString(env: &mut Environment, name: GLenum) -> ConstPtr<GLubyte> {
     with_ctx_and_mem(env, |gles, mem| {
-        let str: *const u8 = unsafe { gles.GetString(name) };
-        //let mut array_tmp = [0u8; 50];
-        //array_tmp[..str.len()].copy_from_slice(str.as_bytes());
-        // let array_tmp: [u8; 25] = str.as_bytes().try_into().unwrap();
-        // mem.alloc_and_write_cstr(&array_tmp).cast_const()
-        //Ptr::cast(str)
-        //Ptr::from_bits(0)
-        mem.alloc_and_write_cstr(&[b'f', b'o', b'o']).cast_const()
+        let cstr = unsafe { CStr::from_ptr(gles.GetString(name).cast()) };
+        mem.alloc_and_write_cstr(&cstr.to_bytes()).cast_const()
     })
 }
 
