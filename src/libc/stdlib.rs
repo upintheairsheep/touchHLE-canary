@@ -187,6 +187,10 @@ fn exit(_env: &mut Environment, exit_code: i32) {
     std::process::exit(exit_code);
 }
 
+fn qsort(_env: &mut Environment, base: MutPtr<u8>, nitems: u32, size: u32, compar: MutPtr<u8>) {
+    // TODO: implement
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
@@ -201,4 +205,5 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(getenv(_)),
     export_c_func!(setenv(_, _, _)),
     export_c_func!(exit(_)),
+    export_c_func!(qsort(_, _, _, _)),
 ];
