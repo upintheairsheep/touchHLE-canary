@@ -187,7 +187,13 @@ fn exit(_env: &mut Environment, exit_code: i32) {
     std::process::exit(exit_code);
 }
 
-fn qsort(_env: &mut Environment, base: MutPtr<u8>, nitems: u32, size: u32, compar: MutPtr<u8>) {
+fn qsort(
+    env: &mut Environment,
+    base: MutPtr<u8>,
+    nitems: u32,
+    size: u32,
+    compar: GuestFunction // int (*compar)(const void *, const void*))
+) {
     // TODO: implement
 }
 
