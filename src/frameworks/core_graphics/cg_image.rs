@@ -139,7 +139,7 @@ fn CGDataProviderCopyData(env: &mut Environment, provider: CGDataProviderRef) ->
 }
 
 fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
-    borrow_image(&env.objc, data).len()
+    borrow_image(&env.objc, data).len().try_into().unwrap()
 }
 
 #[derive(Copy, Clone, Debug)]
