@@ -194,7 +194,7 @@ macro_rules! impl_CallFromGuest {
                 }
             }
         }
-        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* VAList) -> R
+        impl<R, $($P),*> CallFromGuest for fn(&mut Environment, $($P,)* DotDotDot) -> R
             where R: GuestRet, $($P: GuestArg,)* {
             // ignore warnings for the zero-argument case
             #[allow(unused_variables, unused_mut, clippy::unused_unit)]
@@ -207,7 +207,7 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, &env.mem),)*)
                 };
-                let va_list = VAList { reg_offset };
+                let va_list = DotDotDot(VaList { reg_offset, stack_pointer: Ptr::null() });
                 log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
                 let retval = self(env, $(args.$p,)* va_list);
                 log_dbg!("CallFromGuest => {:?}", retval);
@@ -395,13 +395,26 @@ pub fn write_next_arg<T: GuestArg>(
     }
 }
 
-/// Calling convention translation for a variable arguments list (like C
-/// `va_list`).
+/// Represents variable arguments in a [CallFromGuest] function signature,
+/// like C `...`, e.g. in the signature of `printf()`. See also [VaList].
 #[derive(Debug)]
-pub struct VAList {
-    reg_offset: usize,
+pub struct DotDotDot(VaList);
+impl DotDotDot {
+    pub fn start(&self) -> VaList {
+        self.0
+    }
 }
-impl VAList {
+
+/// Calling convention translation for a variable arguments list (like C
+/// `va_list`). When used as a function argument, this is equivalent to
+/// passing a `va_list` struct as an argument, e.g. `vprintf()`.
+/// See also [DotDotDot].
+#[derive(Copy, Clone, Debug)]
+pub struct VaList {
+    reg_offset: usize,
+    stack_pointer: MutVoidPtr,
+}
+impl VaList {
     /// Get the next argument, like C's `va_arg()`. Be careful as the type may
     /// be inferred from the call-site if you don't specify it explicitly.
     pub fn next<T: GuestArg>(&mut self, env: &mut Environment) -> T {
