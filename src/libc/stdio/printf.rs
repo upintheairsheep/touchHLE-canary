@@ -120,6 +120,35 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
     res
 }
 
+fn vsnprintf(
+    env: &mut Environment,
+    dest: MutPtr<u8>,
+    n: GuestUSize,
+    format: ConstPtr<u8>,
+    arg: VaList,
+) -> i32 {
+    log_dbg!(
+        "vsnprintf({:?} {:?} {:?})",
+        dest,
+        format,
+        env.mem.cstr_at_utf8(format)
+    );
+
+    let res = printf_inner::<false, _>(env, |mem, idx| mem.read(format + idx), arg);
+    let middle = if ((n - 1) as usize) < res.len() {
+        &res[..(n - 1) as usize]
+    } else {
+        &res[..]
+    };
+
+    let dest_slice = env.mem.bytes_at_mut(dest, n);
+    for (i, &byte) in middle.iter().chain(b"\0".iter()).enumerate() {
+        dest_slice[i] = byte;
+    }
+
+    res.len().try_into().unwrap()
+}
+
 fn sprintf(env: &mut Environment, dest: MutPtr<u8>, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
     log_dbg!(
         "sprintf({:?}, {:?} ({:?}), ...)",
@@ -156,6 +185,7 @@ fn printf(env: &mut Environment, format: ConstPtr<u8>, args: DotDotDot) -> i32 {
 // TODO: more printf variants
 
 pub const FUNCTIONS: FunctionExports = &[
+    export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
 ];
