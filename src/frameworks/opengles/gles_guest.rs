@@ -722,9 +722,7 @@ fn glDeleteRenderbuffersOES(env: &mut Environment, n: GLsizei, renderbuffers: Mu
     })
 }
 fn glGenerateMipmapOES(env: &mut Environment, target: GLenum) {
-    with_ctx_and_mem(env, |gles, _mem| unsafe {
-        gles.GenerateMipmapOES(target)
-    })
+    with_ctx_and_mem(env, |gles, _mem| unsafe { gles.GenerateMipmapOES(target) })
 }
 
 pub const FUNCTIONS: FunctionExports = &[
