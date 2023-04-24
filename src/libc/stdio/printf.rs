@@ -41,12 +41,16 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            format_char_idx += 1;
+            pad_char = '0';
+        }
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
@@ -69,7 +73,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
-                res.extend_from_slice(env.mem.cstr_at(c_string));
+                if !c_string.is_null() {
+                    res.extend_from_slice(env.mem.cstr_at(c_string));
+                }
             }
             b'd' | b'i' | b'u' => {
                 let int: i64 = if specifier == b'u' {

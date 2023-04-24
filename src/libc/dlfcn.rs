@@ -23,6 +23,10 @@ fn dlopen(env: &mut Environment, path: ConstPtr<u8>, _mode: i32) -> MutVoidPtr {
     path.cast_mut().cast()
 }
 
+fn dlerror(_env: &mut Environment) -> MutVoidPtr {
+    Ptr::null()
+}
+
 fn dlsym(env: &mut Environment, handle: MutVoidPtr, symbol: ConstPtr<u8>) -> MutVoidPtr {
     assert!([
         Ok("/usr/lib/libSystem.B.dylib"),
@@ -52,6 +56,7 @@ fn dlclose(env: &mut Environment, handle: MutVoidPtr) -> i32 {
 
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(dlopen(_, _)),
+    export_c_func!(dlerror()),
     export_c_func!(dlsym(_, _)),
     export_c_func!(dlclose(_)),
 ];

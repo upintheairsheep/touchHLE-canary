@@ -203,9 +203,13 @@ fn alGetSourcei(env: &mut Environment, source: ALuint, param: ALenum, value: Mut
 
 fn alSourcePlay(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourcePlay(source) };
+    let res = unsafe { al::alGetError() };
+    log_dbg!("alSourcePlay alGetError() => {:#x}", res);
 }
 fn alSourceStop(_env: &mut Environment, source: ALuint) {
     unsafe { al::alSourceStop(source) };
+    let res = unsafe { al::alGetError() };
+    log_dbg!("alSourceStop alGetError() => {:#x}", res);
 }
 
 fn alSourceQueueBuffers(
@@ -260,6 +264,8 @@ fn alGenBuffers(env: &mut Environment, n: ALsizei, buffers: MutPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
     let buffers = env.mem.ptr_at_mut(buffers, n_usize);
     unsafe { al::alGenBuffers(n, buffers) };
+    let res = unsafe { al::alGetError() };
+    log_dbg!("alGenBuffers alGetError() => {:#x}", res);
 }
 fn alDeleteBuffers(env: &mut Environment, n: ALsizei, buffers: ConstPtr<ALuint>) {
     let n_usize: GuestUSize = n.try_into().unwrap();
@@ -286,6 +292,8 @@ fn alBufferData(
             samplerate,
         )
     };
+    let res = unsafe { al::alGetError() };
+    log_dbg!("alBufferData alGetError() => {:#x}", res);
 }
 
 /// This is an Apple extension that treats the data passed as a static buffer
@@ -320,6 +328,12 @@ fn alDopplerFactor(_env: &mut Environment, value: ALfloat) {
 
 fn alDopplerVelocity(_env: &mut Environment, value: ALfloat) {
     unsafe { al::alDopplerVelocity(value) };
+}
+
+fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: ConstPtr<ALfloat>) {
+    // we assume that at least 1 parameter should be passed
+    let values = env.mem.ptr_at(values, 1);
+    unsafe { al::alSourcefv(source, param, values) };
 }
 
 // TODO: more functions
@@ -448,9 +462,6 @@ fn alGetListeneri(_env: &mut Environment, _param: ALenum, _value: MutPtr<ALint>)
     todo!();
 }
 fn alIsSource(_env: &mut Environment, _source: ALuint) -> ALboolean {
-    todo!();
-}
-fn alSourcefv(_env: &mut Environment, _source: ALuint, _param: ALenum, _values: ConstPtr<ALfloat>) {
     todo!();
 }
 fn alSource3f(

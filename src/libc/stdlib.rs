@@ -32,6 +32,11 @@ fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoid
     env.mem.alloc(total)
 }
 
+fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
+    assert!(size != 0 && !ptr.is_null());
+    env.mem.realloc(ptr, size)
+}
+
 fn free(env: &mut Environment, ptr: MutVoidPtr) {
     env.mem.free(ptr);
 }
@@ -192,6 +197,7 @@ fn exit(_env: &mut Environment, exit_code: i32) {
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(malloc(_)),
     export_c_func!(calloc(_, _)),
+    export_c_func!(realloc(_, _)),
     export_c_func!(free(_)),
     export_c_func!(atexit(_)),
     export_c_func!(atoi(_)),
