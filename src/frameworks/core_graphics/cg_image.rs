@@ -7,12 +7,13 @@
 
 use super::cg_color_space::{kCGColorSpaceGenericRGB, CGColorSpaceCreateWithName, CGColorSpaceRef};
 use crate::dyld::{export_c_func, FunctionExports};
-use crate::frameworks::core_foundation::{CFRelease, CFRetain, CFTypeRef};
+use crate::frameworks::core_foundation::{CFIndex, CFRelease, CFRetain, CFTypeRef};
 use crate::frameworks::foundation::ns_string;
 use crate::image::Image;
-use crate::mem::GuestUSize;
+use crate::mem::{GuestUSize, MutPtr, SafeRead};
 use crate::objc::{objc_classes, ClassExports, HostObject, ObjC};
-use crate::Environment;
+use crate::{Environment, impl_GuestRet_for_large_struct};
+use crate::abi::GuestArg;
 
 pub type CGImageAlphaInfo = u32;
 pub const kCGImageAlphaNone: CGImageAlphaInfo = 0;
@@ -120,6 +121,62 @@ fn CGImageGetHeight(env: &mut Environment, image: CGImageRef) -> GuestUSize {
     height
 }
 
+pub type CGDataProviderRef = CFTypeRef;
+fn CGImageGetDataProvider(_env: &mut Environment, image: CGImageRef) -> CGDataProviderRef {
+    // TODO: implement proper provider?
+    image
+}
+
+// TODO: move to proper module
+pub type CFDataRef = CFTypeRef;
+fn CGDataProviderCopyData(_env: &mut Environment, provider: CGDataProviderRef) -> CFDataRef {
+    // TODO: copy...
+    // copy raw pixels with host memcopy
+    // create a new image backed with those pixels
+    // convert to cgimageref and return
+    provider
+}
+
+fn CFDataGetLength(env: &mut Environment, data: CFDataRef) -> CFIndex {
+    borrow_image(&env.objc, data).len().try_into().unwrap()
+}
+
+#[derive(Copy, Clone, Debug)]
+#[repr(C, packed)]
+pub struct CFRange {
+    pub location: CFIndex,
+    pub length: CFIndex,
+}
+
+unsafe impl SafeRead for CFRange {}
+impl_GuestRet_for_large_struct!(CFRange);
+impl GuestArg for CFRange {
+    const REG_COUNT: usize = 2;
+
+    fn from_regs(regs: &[u32]) -> Self {
+        CFRange {
+            location: GuestArg::from_regs(&regs[0..1]),
+            length: GuestArg::from_regs(&regs[1..2]),
+        }
+    }
+    fn to_regs(self, regs: &mut [u32]) {
+        self.location.to_regs(&mut regs[0..1]);
+        self.length.to_regs(&mut regs[1..2]);
+    }
+}
+
+fn CFDataGetBytes(env: &mut Environment, data: CFDataRef, _range: CFRange, buffer: MutPtr<u8>) {
+    // TODO: assert that `data` is actually CGImageRef before copying
+    // TODO: actually support CFDataRef :p
+    let src_pixels = borrow_image(&env.objc, data).pixels();
+    let len = src_pixels.len().try_into().unwrap();
+    // TODO: respect range
+    // for i in range.location..(range.location + range.length) {
+    //
+    // }
+    let _ = &env.mem.bytes_at_mut(buffer, len).copy_from_slice(src_pixels);
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageRelease(_)),
     export_c_func!(CGImageRetain(_)),
@@ -127,4 +184,9 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(CGImageGetColorSpace(_)),
     export_c_func!(CGImageGetWidth(_)),
     export_c_func!(CGImageGetHeight(_)),
+    export_c_func!(CGImageGetDataProvider(_)),
+    // TODO: move to cg_data.rs
+    export_c_func!(CGDataProviderCopyData(_)),
+    export_c_func!(CFDataGetLength(_)),
+    export_c_func!(CFDataGetBytes(_, _, _)),
 ];

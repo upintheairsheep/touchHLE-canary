@@ -13,6 +13,7 @@ use std::ffi::{c_int, c_uchar, CStr};
 use touchHLE_stb_image_wrapper::*;
 
 pub struct Image {
+    len: u32,
     pixels: *mut c_uchar,
     dimensions: (u32, u32),
 }
@@ -48,9 +49,14 @@ impl Image {
         let height: u32 = y.try_into().unwrap();
 
         Ok(Image {
+            len: width * height * 4,
             pixels,
             dimensions: (width, height),
         })
+    }
+
+    pub fn len(&self) -> u32 {
+        self.len
     }
 
     pub fn dimensions(&self) -> (u32, u32) {
