@@ -33,7 +33,10 @@ fn calloc(env: &mut Environment, count: GuestUSize, size: GuestUSize) -> MutVoid
 }
 
 fn realloc(env: &mut Environment, ptr: MutVoidPtr, size: GuestUSize) -> MutVoidPtr {
-    assert!(size != 0 && !ptr.is_null());
+    assert_ne!(size, 0);
+    if ptr.is_null() {
+        return malloc(env, size);
+    }
     env.mem.realloc(ptr, size)
 }
 
