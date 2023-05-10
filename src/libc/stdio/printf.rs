@@ -41,12 +41,16 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             continue;
         }
 
-        let pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
+        let mut pad_char = if get_format_char(&env.mem, format_char_idx) == b'0' {
             format_char_idx += 1;
             '0'
         } else {
             ' '
         };
+        if get_format_char(&env.mem, format_char_idx) == b'.' {
+            format_char_idx += 1;
+            pad_char = '0';
+        }
         let pad_width = {
             let mut pad_width = 0;
             while let c @ b'0'..=b'9' = get_format_char(&env.mem, format_char_idx) {
