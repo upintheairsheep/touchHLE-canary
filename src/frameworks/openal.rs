@@ -326,7 +326,7 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
     // with Open AL 1.1 soft implementation!
     // Check "A note for OpenAL library implementors regarding OpenAL 1.0" from OpenAL 1.1 specs for more info
     if env.bundle.bundle_identifier().starts_with("com.zodttd.wolf3d") {
-        log!("Applying game-specific hack for Wolf3D-iOS: ignoring 0.0 doppler velocity.");
+        log_dbg!("Applying game-specific hack for Wolf3D-iOS: ignoring 0.0 doppler velocity.");
         assert_eq!(value, 0.0);
         return;
     }
