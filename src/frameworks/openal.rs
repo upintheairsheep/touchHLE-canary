@@ -498,9 +498,6 @@ fn alGetSourcefv(
 fn alSourcePlayv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
-fn alSourcePause(_env: &mut Environment, _source: ALuint) {
-    todo!();
-}
 fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
     todo!();
 }
