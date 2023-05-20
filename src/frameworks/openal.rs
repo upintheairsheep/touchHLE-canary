@@ -325,10 +325,8 @@ fn alDopplerVelocity(env: &mut Environment, value: ALfloat) {
     // Apparently wolf3d sets doppler velocity to zero, but this results in muting all of the audio
     // with Open AL 1.1 soft implementation!
     // Check "A note for OpenAL library implementors regarding OpenAL 1.0" from OpenAL 1.1 specs for more info
-    if env
-        .bundle
-        .bundle_identifier()
-        .starts_with("com.zodttd.wolf3d")
+    let bundle_id = env.bundle.bundle_identifier();
+    if bundle_id.starts_with("com.zodttd.wolf3d") || bundle_id.starts_with("com.idsoftware.wolf3d")
     {
         log_dbg!("Applying game-specific hack for Wolf3D-iOS: ignoring 0.0 doppler velocity.");
         assert_eq!(value, 0.0);
