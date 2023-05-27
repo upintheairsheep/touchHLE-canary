@@ -14,6 +14,9 @@ use crate::{
 };
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
+use sdl2::libc::sem_t;
+use crate::libc::pthread::semaphore::SemaphoreHostObject;
+use crate::mem::MutPtr;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadID = usize;
@@ -23,7 +26,7 @@ pub struct Thread {
     /// Once a thread finishes, this is set to false.
     pub active: bool,
     /// If this is not [None], the thread is sleeping until the specified time.
-    sleeping_until: Option<Instant>,
+    pub sleeping_until: Option<Instant>,
     /// Set to [true] when a thread is running its startup routine (i.e. the
     /// function pointer passed to `pthread_create`). When it returns to the
     /// host, it should become inactive.
@@ -380,6 +383,42 @@ impl Environment {
         // control is returned to this function.
         self.run_call();
         self.cpu.branch(old_pc);
+    }
+
+    pub fn sleep_sem(&mut self, sem: MutPtr<sem_t>, wait_on_lock: bool) -> bool {
+        let host_sem: &mut _ = self.libc_state.pthread.semaphore.semaphores.get_mut(&sem).unwrap();
+
+        host_sem.value -= 1;
+
+        if host_sem.value <= 0 {
+            assert!(self.threads[self.current_thread].sleeping_until.is_none());
+
+            if !wait_on_lock {
+                return false;
+            }
+
+            host_sem.waiting.insert(self.current_thread);
+            self.sleep(Duration::from_secs(60 * 60 * 24)); // 1 day
+        }
+
+        true
+    }
+
+    pub fn unsleep_sem(&mut self, sem: MutPtr<sem_t>) {
+        let host_sem: &mut _ = self.libc_state.pthread.semaphore.semaphores.get_mut(&sem).unwrap();
+
+        // TODO: ensure that this is an atomic operation?
+        host_sem.value += 1;
+
+        if host_sem.value > 0 {
+            let mut set = &host_sem.waiting;
+            for thread_id in set {
+                let thread = &mut self.threads[*thread_id];
+                assert!(thread.sleeping_until.is_some());
+                thread.sleeping_until = None;
+            }
+            host_sem.waiting.clear();
+        }
     }
 
     /// Run the emulator. This is the main loop and won't return until app exit.

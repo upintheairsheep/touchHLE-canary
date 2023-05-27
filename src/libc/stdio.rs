@@ -69,6 +69,16 @@ fn fread(
     }
 }
 
+fn fgets(
+    env: &mut Environment,
+    str: MutPtr<u8>,
+    size: GuestUSize,
+    stream: MutPtr<FILE>,
+) -> MutVoidPtr {
+    log!("EMPTY fgets !!!!");
+    Ptr::null()
+}
+
 fn fwrite(
     env: &mut Environment,
     buffer: ConstVoidPtr,
@@ -161,6 +171,7 @@ pub const FUNCTIONS: FunctionExports = &[
     // Standard C functions
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
+    export_c_func!(fgets(_, _, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
