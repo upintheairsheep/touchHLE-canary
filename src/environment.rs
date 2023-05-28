@@ -357,7 +357,7 @@ impl Environment {
         self.cpu.regs_mut()[cpu::Cpu::SP] = stack_high_addr;
         self.cpu.regs_mut()[0] = user_data.to_bits();
         self.cpu
-            .branch_with_link(start_routine, self.dyld.return_to_host_routine());
+            .branch_with_link(start_routine, self.dyld.thread_exit_routine());
         self.switch_thread(old_thread);
 
         new_thread_id
@@ -517,17 +517,26 @@ impl Environment {
                 // address of the SVC itself
                 let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                 if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                    assert!(svc_pc == self.dyld.return_to_host_routine().addr_without_thumb_bit());
+                    assert_eq!(svc_pc, self.dyld.return_to_host_routine().addr_without_thumb_bit());
                     assert!(!root);
                     // FIXME/TODO: How do we handle a return-to-host on
                     // the wrong thread? Defer it somehow?
                     if !root && self.current_thread == initial_thread {
                         // Normal return from host-to-guest call
                         return ThreadNextAction::ReturnToHost;
-                    } else if self.threads[self.current_thread].in_start_routine {
+                    } else if !root && self.current_thread != initial_thread {
+                        self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
+                        return ThreadNextAction::Yield;
+                    } else {
+                        panic!("Unexpected return-to-host!");
+                    }
+                }
+
+                if svc == dyld::Dyld::SVC_THREAD_EXIT {
+                    assert_eq!(svc_pc, self.dyld.thread_exit_routine().addr_without_thumb_bit());
+                    assert!(!root);
+                    if self.threads[self.current_thread].in_start_routine {
                         // Secondary thread finished starting
-                        // TODO: Having two meanings for this SVC is
-                        // dangerous, use a different SVC for this case.
                         log_dbg!(
                             "Thread {} finished start routine and became inactive",
                             self.current_thread
@@ -538,11 +547,8 @@ impl Environment {
                         log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
                         self.mem.free(stack);
                         return ThreadNextAction::Yield;
-                    } else if !root && self.current_thread != initial_thread {
-                        self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
-                        return ThreadNextAction::Yield;
                     } else {
-                        panic!("Unexpected return-to-host!");
+                        panic!("Unexpected thread-exit!");
                     }
                 }
 
