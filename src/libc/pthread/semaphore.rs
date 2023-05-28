@@ -90,9 +90,21 @@ fn sem_trywait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     }
 }
 
+fn sem_unlink(_env: &mut Environment, _name: ConstPtr<u8>,) -> i32 {
+    0
+}
+
+fn sem_close(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
+    State::get(env).semaphores.remove(&sem);
+    env.mem.free(sem.cast());
+    0
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sem_open(_, _, _, _)),
     export_c_func!(sem_post(_)),
     export_c_func!(sem_wait(_)),
-    export_c_func!(sem_trywait(_))
+    export_c_func!(sem_trywait(_)),
+    export_c_func!(sem_unlink(_)),
+    export_c_func!(sem_close(_)),
 ];

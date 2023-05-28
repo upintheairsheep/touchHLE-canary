@@ -389,13 +389,14 @@ impl Environment {
         let host_sem: &mut _ = self.libc_state.pthread.semaphore.semaphores.get_mut(&sem).unwrap();
 
         host_sem.value -= 1;
+        log_dbg!("Sleep: Sem {:?} is now {}", sem, host_sem.value);
 
-        if host_sem.value <= 0 {
+        if !wait_on_lock {
+            return host_sem.value >= 0;
+        }
+
+        if host_sem.value < 0 {
             assert!(self.threads[self.current_thread].sleeping_until.is_none());
-
-            if !wait_on_lock {
-                return false;
-            }
 
             host_sem.waiting.insert(self.current_thread);
             self.sleep(Duration::from_secs(60 * 60 * 24)); // 1 day
@@ -409,6 +410,7 @@ impl Environment {
 
         // TODO: ensure that this is an atomic operation?
         host_sem.value += 1;
+        log_dbg!("Unsleep: Sem {:?} is now {}", sem, host_sem.value);
 
         if host_sem.value > 0 {
             let mut set = &host_sem.waiting;
@@ -535,6 +537,9 @@ impl Environment {
                         let stack: mem::MutVoidPtr = mem::Ptr::from_bits(*stack.start());
                         log_dbg!("Freeing thread {} stack {:?}", self.current_thread, stack);
                         self.mem.free(stack);
+                        return ThreadNextAction::Yield;
+                    } else if !root && self.current_thread != initial_thread {
+                        self.cpu.regs_mut()[cpu::Cpu::PC] = svc_pc;
                         return ThreadNextAction::Yield;
                     } else {
                         panic!("Unexpected return-to-host!");
