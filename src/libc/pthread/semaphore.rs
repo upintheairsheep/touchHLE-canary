@@ -6,7 +6,6 @@
 //! `semaphore.h`
 
 use std::collections::{HashMap, HashSet};
-use sdl2::libc::usleep;
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::posix_io::stat::mode_t;
 use crate::mem::{ConstPtr, MutPtr, Ptr};
@@ -24,7 +23,7 @@ impl State {
 }
 
 #[allow(non_camel_case_types)]
-type sem_t = i32;
+pub type sem_t = i32;
 
 const SEM_FAILED: i32 = -1;
 

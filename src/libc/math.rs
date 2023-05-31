@@ -184,6 +184,10 @@ fn truncf(_env: &mut Environment, arg: f32) -> f32 {
     arg.trunc()
 }
 
+fn pow(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
+    arg1.powf(arg2)
+}
+
 // Remainder functions
 // TODO: implement the rest
 fn fmod(_env: &mut Environment, arg1: f64, arg2: f64) -> f64 {
@@ -237,6 +241,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(expm1f(_)),
     export_c_func!(exp2(_)),
     export_c_func!(exp2f(_)),
+    export_c_func!(pow(_, _)),
     // Power functions
     export_c_func!(sqrt(_)),
     export_c_func!(sqrtf(_)),

@@ -14,8 +14,7 @@ use crate::{
 };
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
-use sdl2::libc::sem_t;
-use crate::libc::pthread::semaphore::SemaphoreHostObject;
+use crate::libc::pthread::semaphore::{sem_t, SemaphoreHostObject};
 use crate::mem::MutPtr;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
@@ -413,7 +412,7 @@ impl Environment {
         log_dbg!("Unsleep: Sem {:?} is now {}", sem, host_sem.value);
 
         if host_sem.value > 0 {
-            let mut set = &host_sem.waiting;
+            let set = &host_sem.waiting;
             for thread_id in set {
                 let thread = &mut self.threads[*thread_id];
                 assert!(thread.sleeping_until.is_some());

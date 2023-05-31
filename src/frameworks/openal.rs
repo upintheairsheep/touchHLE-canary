@@ -341,6 +341,10 @@ fn alSourcefv(env: &mut Environment, source: ALuint, param: ALenum, values: Cons
     unsafe { al::alSourcefv(source, param, values) };
 }
 
+fn alSourceRewind(_env: &mut Environment, source: ALuint) {
+    unsafe { al::alSourceRewind(source) };
+}
+
 // TODO: more functions
 
 // Note: For some reasons Wolf3d registers many OpenAl functions, but actually uses only few ones.
@@ -504,9 +508,6 @@ fn alSourcePausev(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr
     todo!();
 }
 fn alSourceStopv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
-    todo!();
-}
-fn alSourceRewind(_env: &mut Environment, _source: ALuint) {
     todo!();
 }
 fn alSourceRewindv(_env: &mut Environment, _nsources: ALsizei, _sources: ConstPtr<ALuint>) {
