@@ -11,6 +11,7 @@ use crate::fs::GuestPath;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
+use crate::libc::string::strlen;
 
 // Standard C functions
 
@@ -75,8 +76,32 @@ fn fgets(
     size: GuestUSize,
     stream: MutPtr<FILE>,
 ) -> MutVoidPtr {
-    log!("EMPTY fgets !!!!");
-    Ptr::null()
+    let mut chars = Vec::<u8>::new();
+    let mut read = 0;
+    let char_buf = env.mem.alloc(1);
+    while read < size && fread(env, char_buf, 1, 1, stream) != 0 {
+        read += 1;
+
+        chars.push(env.mem.bytes_at(char_buf.cast(), 1)[0])
+    }
+    env.mem.free(char_buf);
+
+    if read == 0 {
+        return Ptr::null();
+    } else {
+        chars.push(b'\0');
+    }
+    env.mem.bytes_at_mut(str, chars.len().try_into().unwrap()).copy_from_slice(&chars);
+    str.cast()
+}
+
+fn fputs(
+    env: &mut Environment,
+    str: ConstPtr<u8>,
+    stream: MutPtr<FILE>,
+) -> i32 {
+    let str_len = strlen(env, str);
+    fwrite(env, str.cast(), str_len, 1, stream).try_into().unwrap()
 }
 
 fn fwrite(
@@ -172,6 +197,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fopen(_, _)),
     export_c_func!(fread(_, _, _, _)),
     export_c_func!(fgets(_, _, _)),
+    export_c_func!(fputs(_, _)),
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),

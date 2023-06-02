@@ -89,7 +89,7 @@ fn memchr(env: &mut Environment, string: ConstVoidPtr, c: i32, size: GuestUSize)
 fn memcmp(env: &mut Environment, a: ConstVoidPtr, b: ConstVoidPtr, size: GuestUSize) -> i32 {
     GenericChar::<u8>::memcmp(env, a.cast(), b.cast(), size)
 }
-fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
+pub fn strlen(env: &mut Environment, s: ConstPtr<u8>) -> GuestUSize {
     GenericChar::<u8>::strlen(env, s)
 }
 fn strcpy(env: &mut Environment, dest: MutPtr<u8>, src: ConstPtr<u8>) -> MutPtr<u8> {
@@ -105,6 +105,13 @@ fn strncpy(
     size: GuestUSize,
 ) -> MutPtr<u8> {
     GenericChar::<u8>::strncpy(env, dest, src, size)
+}
+fn strsep(
+    env: &mut Environment,
+    stringp: MutPtr<MutPtr<u8>>,
+    delim: ConstPtr<u8>,
+) -> MutPtr<u8> {
+    GenericChar::<u8>::strsep(env, stringp, delim)
 }
 pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strdup(env, src)
@@ -195,6 +202,7 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(strcpy(_, _)),
     export_c_func!(strcat(_, _)),
     export_c_func!(strncpy(_, _, _)),
+    export_c_func!(strsep(_, _)),
     export_c_func!(strdup(_)),
     export_c_func!(strcmp(_, _)),
     export_c_func!(strcasecmp(_, _)),
