@@ -9,6 +9,7 @@
 //! - Apple's [Threading Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/Introduction/Introduction.html)
 
 use super::{ns_string, ns_timer};
+use crate::abi::{GuestArg, GuestFunction};
 use crate::dyld::{ConstantExports, HostConstant};
 use crate::frameworks::audio_toolbox::audio_queue::{handle_audio_queue, AudioQueueRef};
 use crate::frameworks::core_foundation::cf_run_loop::{
@@ -17,6 +18,8 @@ use crate::frameworks::core_foundation::cf_run_loop::{
 use crate::frameworks::{media_player, uikit};
 use crate::objc::{id, msg, objc_classes, release, retain, ClassExports, HostObject};
 use crate::Environment;
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 /// `NSString*`
@@ -41,13 +44,14 @@ pub struct State {
     main_thread_run_loop: Option<id>,
 }
 
-struct NSRunLoopHostObject {
+pub struct NSRunLoopHostObject {
     /// Weak reference. Audio queue must remove itself when destroyed (TODO).
     /// They are in no particular order.
     audio_queues: Vec<AudioQueueRef>,
     /// Strong references to `NSTimer*` in no particular order. Timers are owned
     /// by the run loop. The timer must remove itself when invalidated.
     timers: Vec<id>,
+    pub callbacks_queue: Rc<RefCell<Vec<Box<dyn FnOnce(&mut Environment)>>>>,
 }
 impl HostObject for NSRunLoopHostObject {}
 
@@ -64,6 +68,7 @@ pub const CLASSES: ClassExports = objc_classes! {
         let host_object = Box::new(NSRunLoopHostObject {
             audio_queues: Vec::new(),
             timers: Vec::new(),
+            callbacks_queue: Rc::new(RefCell::new(Vec::new())),
         });
         let new = env.objc.alloc_static_object(this, host_object, &mut env.mem);
         env.framework_state.foundation.ns_run_loop.main_thread_run_loop = Some(new);
@@ -160,6 +165,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     // environment or to lock the object. Re-used each iteration for efficiency.
     let mut timers_tmp = Vec::new();
     let mut audio_queues_tmp = Vec::new();
+    //let mut callbacks_queues_tmp = Vec::new();
 
     fn limit_sleep_time(current: &mut Option<Instant>, new: Option<Instant>) {
         if let Some(new) = new {
@@ -195,6 +201,19 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
         }
 
         media_player::handle_players(env);
+
+        //assert!(callbacks_queues_tmp.is_empty());
+        let cq = env
+            .objc
+            .borrow::<NSRunLoopHostObject>(run_loop)
+            .callbacks_queue
+            .clone();
+        // callbacks_queues_tmp.extend_from_slice(
+        //     &(*cq),
+        // );
+        for callback in cq.borrow_mut().drain(..) {
+            callback(env);
+        }
 
         // Unfortunately, touchHLE has to poll for certain things repeatedly;
         // it can't just wait until the next event appears.

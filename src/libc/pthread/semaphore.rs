@@ -5,12 +5,12 @@
  */
 //! `semaphore.h`
 
-use std::collections::{HashMap, HashSet};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::libc::posix_io::stat::mode_t;
+use crate::libc::unistd;
 use crate::mem::{ConstPtr, MutPtr, Ptr};
 use crate::{Environment, ThreadID};
-use crate::libc::unistd;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct State {
@@ -29,7 +29,7 @@ const SEM_FAILED: i32 = -1;
 
 pub struct SemaphoreHostObject {
     pub value: i32,
-    pub waiting: HashSet<ThreadID>
+    pub waiting: HashSet<ThreadID>,
 }
 
 fn sem_open(
@@ -46,7 +46,7 @@ fn sem_open(
         sem,
         SemaphoreHostObject {
             value: value as i32,
-            waiting: HashSet::new()
+            waiting: HashSet::new(),
         },
     );
 
@@ -89,7 +89,7 @@ fn sem_trywait(env: &mut Environment, sem: MutPtr<sem_t>) -> i32 {
     }
 }
 
-fn sem_unlink(_env: &mut Environment, _name: ConstPtr<u8>,) -> i32 {
+fn sem_unlink(_env: &mut Environment, _name: ConstPtr<u8>) -> i32 {
     0
 }
 

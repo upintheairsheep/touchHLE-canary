@@ -261,10 +261,11 @@ fn localtime(env: &mut Environment, timestamp: ConstPtr<time_t>) -> MutPtr<tm> {
 type suseconds_t = i32;
 
 #[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug)]
 #[repr(C, packed)]
-struct timeval {
-    tv_sec: time_t,
-    tv_usec: suseconds_t,
+pub struct timeval {
+    pub tv_sec: time_t,
+    pub tv_usec: suseconds_t,
 }
 unsafe impl SafeRead for timeval {}
 

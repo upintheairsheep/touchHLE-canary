@@ -42,4 +42,5 @@ pub struct State {
     string: string::State,
     time: time::State,
     errno: errno::State,
+    network: network::State,
 }

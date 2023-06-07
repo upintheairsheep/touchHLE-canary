@@ -404,7 +404,7 @@ impl Dyld {
         match svc {
             Self::SVC_LAZY_LINK => self.do_lazy_link(bins, mem, cpu, svc_pc),
             Self::SVC_RETURN_TO_HOST => unreachable!(), // don't handle here
-            Self::SVC_THREAD_EXIT => unreachable!(), // don't handle here
+            Self::SVC_THREAD_EXIT => unreachable!(),    // don't handle here
             Self::SVC_LINKED_FUNCTIONS_BASE.. => {
                 let f = self
                     .linked_host_functions

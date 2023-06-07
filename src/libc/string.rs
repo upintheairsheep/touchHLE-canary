@@ -106,11 +106,7 @@ fn strncpy(
 ) -> MutPtr<u8> {
     GenericChar::<u8>::strncpy(env, dest, src, size)
 }
-fn strsep(
-    env: &mut Environment,
-    stringp: MutPtr<MutPtr<u8>>,
-    delim: ConstPtr<u8>,
-) -> MutPtr<u8> {
+fn strsep(env: &mut Environment, stringp: MutPtr<MutPtr<u8>>, delim: ConstPtr<u8>) -> MutPtr<u8> {
     GenericChar::<u8>::strsep(env, stringp, delim)
 }
 pub(super) fn strdup(env: &mut Environment, src: ConstPtr<u8>) -> MutPtr<u8> {

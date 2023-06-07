@@ -8,14 +8,14 @@
 //! Unlike its siblings, this module should be considered private and only used
 //! via the re-exports one level up.
 
+use crate::libc::pthread::semaphore::{sem_t, SemaphoreHostObject};
+use crate::mem::MutPtr;
 use crate::{
     abi, bundle, cpu, dyld, frameworks, fs, gdb, image, libc, mach_o, mem, objc, options, stack,
     window,
 };
 use std::net::TcpListener;
 use std::time::{Duration, Instant};
-use crate::libc::pthread::semaphore::{sem_t, SemaphoreHostObject};
-use crate::mem::MutPtr;
 
 /// Index into the [Vec] of threads. Thread 0 is always the main thread.
 pub type ThreadID = usize;
@@ -385,7 +385,13 @@ impl Environment {
     }
 
     pub fn sleep_sem(&mut self, sem: MutPtr<sem_t>, wait_on_lock: bool) -> bool {
-        let host_sem: &mut _ = self.libc_state.pthread.semaphore.semaphores.get_mut(&sem).unwrap();
+        let host_sem: &mut _ = self
+            .libc_state
+            .pthread
+            .semaphore
+            .semaphores
+            .get_mut(&sem)
+            .unwrap();
 
         host_sem.value -= 1;
         log_dbg!("Sleep: Sem {:?} is now {}", sem, host_sem.value);
@@ -405,7 +411,13 @@ impl Environment {
     }
 
     pub fn unsleep_sem(&mut self, sem: MutPtr<sem_t>) {
-        let host_sem: &mut _ = self.libc_state.pthread.semaphore.semaphores.get_mut(&sem).unwrap();
+        let host_sem: &mut _ = self
+            .libc_state
+            .pthread
+            .semaphore
+            .semaphores
+            .get_mut(&sem)
+            .unwrap();
 
         // TODO: ensure that this is an atomic operation?
         host_sem.value += 1;
@@ -516,7 +528,10 @@ impl Environment {
                 // address of the SVC itself
                 let svc_pc = self.cpu.regs()[cpu::Cpu::PC] - 4;
                 if svc == dyld::Dyld::SVC_RETURN_TO_HOST {
-                    assert_eq!(svc_pc, self.dyld.return_to_host_routine().addr_without_thumb_bit());
+                    assert_eq!(
+                        svc_pc,
+                        self.dyld.return_to_host_routine().addr_without_thumb_bit()
+                    );
                     assert!(!root);
                     // FIXME/TODO: How do we handle a return-to-host on
                     // the wrong thread? Defer it somehow?
@@ -532,7 +547,10 @@ impl Environment {
                 }
 
                 if svc == dyld::Dyld::SVC_THREAD_EXIT {
-                    assert_eq!(svc_pc, self.dyld.thread_exit_routine().addr_without_thumb_bit());
+                    assert_eq!(
+                        svc_pc,
+                        self.dyld.thread_exit_routine().addr_without_thumb_bit()
+                    );
                     assert!(!root);
                     if self.threads[self.current_thread].in_start_routine {
                         // Secondary thread finished starting

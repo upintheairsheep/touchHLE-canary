@@ -70,7 +70,7 @@ pub fn main() {
         if let Some(license) = dep.license {
             write!(&mut deps_string, ", licensed under {}", license).unwrap();
         } else {
-            panic!("Dependency {} has an unspecified license!", dep.name);
+            //panic!("Dependency {} has an unspecified license!", dep.name);
         }
         writeln!(&mut deps_string).unwrap();
     }

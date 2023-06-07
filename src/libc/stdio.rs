@@ -8,10 +8,10 @@
 use super::posix_io::{self, O_APPEND, O_CREAT, O_RDONLY, O_RDWR, O_TRUNC, O_WRONLY};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::fs::GuestPath;
+use crate::libc::string::strlen;
 use crate::mem::{ConstPtr, ConstVoidPtr, GuestUSize, MutPtr, MutVoidPtr, Ptr, SafeRead};
 use crate::Environment;
 use std::io::Write;
-use crate::libc::string::strlen;
 
 // Standard C functions
 
@@ -91,17 +91,17 @@ fn fgets(
     } else {
         chars.push(b'\0');
     }
-    env.mem.bytes_at_mut(str, chars.len().try_into().unwrap()).copy_from_slice(&chars);
+    env.mem
+        .bytes_at_mut(str, chars.len().try_into().unwrap())
+        .copy_from_slice(&chars);
     str.cast()
 }
 
-fn fputs(
-    env: &mut Environment,
-    str: ConstPtr<u8>,
-    stream: MutPtr<FILE>,
-) -> i32 {
+fn fputs(env: &mut Environment, str: ConstPtr<u8>, stream: MutPtr<FILE>) -> i32 {
     let str_len = strlen(env, str);
-    fwrite(env, str.cast(), str_len, 1, stream).try_into().unwrap()
+    fwrite(env, str.cast(), str_len, 1, stream)
+        .try_into()
+        .unwrap()
 }
 
 fn fwrite(
