@@ -184,9 +184,9 @@ macro_rules! impl_CallFromGuest {
                 let args: ($($P,)*) = {
                     ($(read_next_arg::<$P>(&mut reg_offset, regs, Ptr::from_bits(regs[Cpu::SP]), &env.mem),)*)
                 };
-                log_dbg!("CallFromGuest {:?}", args);
+                //log_dbg!("CallFromGuest {:?}", args);
                 let retval = self(env, $(args.$p),*);
-                log_dbg!("CallFromGuest => {:?}", retval);
+                //log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
                     retval.to_mem(retval_ptr, &mut env.mem);
                 } else {
@@ -211,9 +211,9 @@ macro_rules! impl_CallFromGuest {
                     reg_offset,
                     stack_pointer: Ptr::from_bits(regs[Cpu::SP])
                 });
-                log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
+                //log_dbg!("CallFromGuest {:?}, ...{:?}", args, va_list);
                 let retval = self(env, $(args.$p,)* va_list);
-                log_dbg!("CallFromGuest => {:?}", retval);
+                //log_dbg!("CallFromGuest => {:?}", retval);
                 if let Some(retval_ptr) = retval_ptr {
                     retval.to_mem(retval_ptr, &mut env.mem);
                 } else {
@@ -234,6 +234,10 @@ impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7);
 impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11);
+impl_CallFromGuest!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10, 11 => P11, 12 => P12);
 
 /// This trait represents a guest or host function that can be called from host
 /// code, but using the guest ABI. See [CallFromGuest], which this is the
@@ -314,6 +318,8 @@ impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7);
 impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9);
+impl_CallFromHost!(0 => P0, 1 => P1, 2 => P2, 3 => P3, 4 => P4, 5 => P5, 6 => P6, 7 => P7, 8 => P8, 9 => P9, 10 => P10);
 
 /// Calling convention translation for a function argument type.
 pub trait GuestArg: std::fmt::Debug + Sized {

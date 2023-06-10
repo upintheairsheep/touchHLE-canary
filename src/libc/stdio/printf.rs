@@ -10,7 +10,7 @@ use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
 use crate::libc::posix_io::FileDescriptor;
 use crate::libc::stdio::FILE;
-use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr};
+use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr, MutVoidPtr, Ptr};
 use crate::objc::{id, msg};
 use crate::Environment;
 use std::io::Write;
@@ -92,7 +92,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 //assert!(pad_char == ' ' && pad_width == 0); // TODO
-                res.extend_from_slice(env.mem.cstr_at(c_string));
+                if c_string != ConstPtr::null() {
+                    res.extend_from_slice(env.mem.cstr_at(c_string));
+                }
             }
             b'd' | b'i' | b'u' => {
                 let int: i64 = if specifier == b'u' {

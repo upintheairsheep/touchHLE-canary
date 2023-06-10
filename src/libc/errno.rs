@@ -20,7 +20,7 @@ pub struct State {
     errnos: std::collections::HashMap<crate::ThreadID, MutPtr<i32>>,
 }
 impl State {
-    fn errno_for_thread(
+    pub fn errno_for_thread(
         &mut self,
         mem: &mut crate::mem::Mem,
         thread: crate::ThreadID,
@@ -30,6 +30,11 @@ impl State {
             .errnos
             .entry(thread)
             .or_insert_with(|| mem.alloc_and_write(0i32))
+    }
+
+    pub fn set_errno_for_thread(&mut self, mem: &mut crate::mem::Mem, thread: crate::ThreadID, errno: i32) {
+        let ptr = self.errno_for_thread(mem, thread);
+        mem.write(ptr, errno);
     }
 }
 

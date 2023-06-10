@@ -165,7 +165,7 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
     // environment or to lock the object. Re-used each iteration for efficiency.
     let mut timers_tmp = Vec::new();
     let mut audio_queues_tmp = Vec::new();
-    //let mut callbacks_queues_tmp = Vec::new();
+    let mut callbacks_queues_tmp = Vec::new();
 
     fn limit_sleep_time(current: &mut Option<Instant>, new: Option<Instant>) {
         if let Some(new) = new {
@@ -202,16 +202,18 @@ fn run_run_loop(env: &mut Environment, run_loop: id) {
 
         media_player::handle_players(env);
 
-        //assert!(callbacks_queues_tmp.is_empty());
+        assert!(callbacks_queues_tmp.is_empty());
         let cq = env
             .objc
             .borrow::<NSRunLoopHostObject>(run_loop)
             .callbacks_queue
             .clone();
-        // callbacks_queues_tmp.extend_from_slice(
-        //     &(*cq),
-        // );
-        for callback in cq.borrow_mut().drain(..) {
+        // we need to use tmp queue as callback can potentially modify callbacks_queue!
+        // TODO: find how to extend_from_slice here
+        for x in (*cq).borrow_mut().drain(..) {
+            callbacks_queues_tmp.push(x);
+        }
+        for callback in callbacks_queues_tmp.drain(..) {
             callback(env);
         }
 
