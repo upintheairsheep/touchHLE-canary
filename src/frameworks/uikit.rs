@@ -14,6 +14,7 @@ use std::time::Instant;
 
 pub mod ui_accelerometer;
 pub mod ui_application;
+pub mod ui_button;
 pub mod ui_color;
 pub mod ui_control;
 pub mod ui_device;
