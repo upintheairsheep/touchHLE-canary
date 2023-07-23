@@ -8,6 +8,7 @@
 use crate::abi::{DotDotDot, VaList};
 use crate::dyld::{export_c_func, FunctionExports};
 use crate::frameworks::foundation::ns_string;
+use crate::libc::stdio::FILE;
 use crate::mem::{ConstPtr, GuestUSize, Mem, MutPtr};
 use crate::objc::{id, msg};
 use crate::Environment;
@@ -86,7 +87,9 @@ pub fn printf_inner<const NS_LOG: bool, F: Fn(&Mem, GuestUSize) -> u8>(
             b's' => {
                 let c_string: ConstPtr<u8> = args.next(env);
                 assert!(pad_char == ' ' && pad_width == 0); // TODO
-                res.extend_from_slice(env.mem.cstr_at(c_string));
+                if !c_string.is_null() {
+                    res.extend_from_slice(env.mem.cstr_at(c_string));
+                }
             }
             b'd' | b'i' | b'u' => {
                 let int: i64 = if specifier == b'u' {
@@ -279,10 +282,22 @@ fn sscanf(env: &mut Environment, src: ConstPtr<u8>, format: ConstPtr<u8>, args: 
     matched_args
 }
 
+fn fprintf(
+    env: &mut Environment,
+    stream: MutPtr<FILE>,
+    format: ConstPtr<u8>,
+    args: DotDotDot,
+) -> i32 {
+    // TODO: assert that stream is stdio
+    assert!(stream.is_null());
+    printf(env, format, args)
+}
+
 pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(sscanf(_, _, _)),
     export_c_func!(vsnprintf(_, _, _, _)),
     export_c_func!(vsprintf(_, _, _)),
     export_c_func!(sprintf(_, _, _)),
     export_c_func!(printf(_, _)),
+    export_c_func!(fprintf(_, _, _)),
 ];
