@@ -557,16 +557,17 @@ impl Fs {
         matches!(self.lookup_node(path), Some(FsNode::File { .. }))
     }
 
-    #[allow(dead_code)]
     /// Get an iterator over the names of files/directories in a directory.
-    pub fn enumerate<P: AsRef<GuestPath>>(
-        &self,
-        path: P,
-    ) -> Result<impl Iterator<Item = &str>, ()> {
+    pub fn enumerate<P: AsRef<GuestPath>>(&self, path: P) -> Result<Vec<GuestPathBuf>, ()> {
         let Some(FsNode::Directory { children, .. }) = self.lookup_node(path.as_ref()) else {
             return Err(());
         };
-        Ok(children.keys().map(|name| name.as_str()))
+        let mut paths = Vec::new();
+        let iter = children.keys().map(|name| name.as_str());
+        for name in iter {
+            paths.push(GuestPathBuf::from(GuestPath::new(name)));
+        }
+        Ok(paths)
     }
 
     /// Recursively list the paths of files/directories in a directory.
