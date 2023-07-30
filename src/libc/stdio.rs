@@ -152,6 +152,17 @@ fn fclose(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     }
 }
 
+fn fsetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: ConstPtr<i64>) -> i32 {
+    let res = i32::try_from(env.mem.read(pos)).unwrap();
+    fseek(env, file_ptr, res, SEEK_SET)
+}
+
+fn fgetpos(env: &mut Environment, file_ptr: MutPtr<FILE>, pos: MutPtr<i64>) -> i32 {
+    let res = ftell(env, file_ptr);
+    env.mem.write(pos, res.into());
+    res
+}
+
 fn feof(env: &mut Environment, file_ptr: MutPtr<FILE>) -> i32 {
     let FILE { fd } = env.mem.read(file_ptr);
     posix_io::eof(env, fd)
@@ -203,6 +214,8 @@ pub const FUNCTIONS: FunctionExports = &[
     export_c_func!(fwrite(_, _, _, _)),
     export_c_func!(fseek(_, _, _)),
     export_c_func!(ftell(_)),
+    export_c_func!(fsetpos(_, _)),
+    export_c_func!(fgetpos(_, _)),
     export_c_func!(feof(_)),
     export_c_func!(fclose(_)),
     export_c_func!(puts(_)),
