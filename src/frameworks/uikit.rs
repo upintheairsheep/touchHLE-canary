@@ -30,6 +30,10 @@ pub mod ui_screen;
 pub mod ui_text_field;
 pub mod ui_touch;
 pub mod ui_view;
+pub mod ui_label;
+pub mod ui_scroll_view;
+pub mod ui_text_view;
+pub mod ui_switch;
 pub mod ui_view_controller;
 pub mod ui_window;
 
