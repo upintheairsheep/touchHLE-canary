@@ -74,6 +74,11 @@ fn open(env: &mut Environment, path: ConstPtr<u8>, flags: i32, _args: DotDotDot)
 
 /// Special extension for host code: [open] without the [DotDotDot].
 pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> FileDescriptor {
+    log!(
+        "pre-open({:?}, {:#x})",
+        env.mem.cstr_at_utf8(path).unwrap(),
+        flags
+    );
     // TODO: support more flags, this list is not complete
     assert!(
         flags & !(O_ACCMODE | O_NONBLOCK | O_APPEND | O_NOFOLLOW | O_CREAT | O_TRUNC | O_EXCL) == 0
@@ -103,8 +108,17 @@ pub fn open_direct(env: &mut Environment, path: ConstPtr<u8>, flags: i32) -> Fil
         options.truncate();
     }
 
+    let path_str = env.mem.cstr_at_utf8(path).unwrap();
+    let prefix = if path_str.starts_with("User/") {
+        "/"
+    } else {
+        ""
+    };
+    let bind = GuestPath::new(&(prefix.to_owned() + path_str)).to_owned();
+    let ppath = bind.as_ref();
+
     let res = match env.fs.open_with_options(
-        GuestPath::new(&env.mem.cstr_at_utf8(path).unwrap()),
+        ppath,
         options,
     ) {
         Ok(file) => {

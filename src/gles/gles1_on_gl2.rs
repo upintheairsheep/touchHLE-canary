@@ -804,6 +804,10 @@ impl GLES for GLES1OnGL2 {
         assert!(target == gl21::ARRAY_BUFFER || target == gl21::ELEMENT_ARRAY_BUFFER);
         gl21::BindBuffer(target, buffer)
     }
+    unsafe fn BufferData(&mut self, target: GLenum, size: GLsizei, data: *const GLvoid, usage: GLenum) {
+        assert_eq!(target, gles11::ARRAY_BUFFER);
+        gl21::BufferData(target, size as GLsizeiptr, data, usage)
+    }
 
     // Non-pointers
     unsafe fn Color4f(&mut self, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat) {
@@ -816,6 +820,9 @@ impl GLES for GLES1OnGL2 {
             fixed_to_float(blue),
             fixed_to_float(alpha),
         )
+    }
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) {
+        gl21::Color4ub(red, green, blue, alpha)
     }
 
     // Pointers

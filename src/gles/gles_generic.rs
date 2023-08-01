@@ -92,10 +92,12 @@ pub trait GLES {
     unsafe fn GenBuffers(&mut self, n: GLsizei, buffers: *mut GLuint);
     unsafe fn DeleteBuffers(&mut self, n: GLsizei, buffers: *const GLuint);
     unsafe fn BindBuffer(&mut self, target: GLenum, buffer: GLuint);
+    unsafe fn BufferData(&mut self, target: GLenum, size: GLsizei, data: *const GLvoid, usage: GLenum);
 
     // Non-pointers
     unsafe fn Color4f(&mut self, red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat);
     unsafe fn Color4x(&mut self, red: GLfixed, green: GLfixed, blue: GLfixed, alpha: GLfixed);
+    unsafe fn Color4ub(&mut self, red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte);
 
     // Pointers
     unsafe fn ColorPointer(
