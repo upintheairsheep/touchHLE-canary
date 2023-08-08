@@ -57,3 +57,4 @@ jobs:
       with:
         name: touchHLE_Windows_x86_64
         path: touchHLE.exe
+        
